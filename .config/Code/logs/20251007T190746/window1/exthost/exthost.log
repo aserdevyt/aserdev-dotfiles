@@ -1,0 +1,40 @@
+2025-10-07 19:07:54.735 [info] Extension host with pid 30308 started
+2025-10-07 19:07:55.103 [info] ExtensionService#_doActivateExtension vscode.github-authentication, startup: false, activationEvent: 'onAuthenticationRequest:github'
+2025-10-07 19:07:55.223 [info] ExtensionService#_doActivateExtension vscode.emmet, startup: false, activationEvent: 'onLanguage'
+2025-10-07 19:07:55.324 [info] ExtensionService#_doActivateExtension GitHub.copilot-chat, startup: false, activationEvent: 'onChatParticipant:github.copilot.editsAgent'
+2025-10-07 19:07:57.305 [info] ExtensionService#_doActivateExtension vscode.git-base, startup: true, activationEvent: '*', root cause: vscode.git
+2025-10-07 19:07:57.413 [info] ExtensionService#_doActivateExtension vscode.microsoft-authentication, startup: false, activationEvent: 'onAuthenticationRequest:microsoft'
+2025-10-07 19:07:57.618 [info] ExtensionService#_doActivateExtension vscode.git, startup: true, activationEvent: '*'
+2025-10-07 19:07:57.837 [info] ExtensionService#_doActivateExtension vscode.github, startup: true, activationEvent: '*'
+2025-10-07 19:07:58.708 [info] Eager extensions activated
+2025-10-07 19:07:58.737 [info] ExtensionService#_doActivateExtension vscode.debug-auto-launch, startup: false, activationEvent: 'onStartupFinished'
+2025-10-07 19:07:58.789 [info] ExtensionService#_doActivateExtension vscode.merge-conflict, startup: false, activationEvent: 'onStartupFinished'
+2025-10-07 19:07:58.896 [info] ExtensionService#_doActivateExtension GitHub.copilot, startup: false, activationEvent: 'onStartupFinished'
+2025-10-07 19:08:05.619 [error] Error: GitHubLoginFailed
+    at y9._authShowWarnings (/home/aserdev/.vscode/extensions/github.copilot-chat-0.31.5/dist/extension.js:949:16822)
+    at y9.getCopilotToken (/home/aserdev/.vscode/extensions/github.copilot-chat-0.31.5/dist/extension.js:949:15345)
+    at YG.getCopilotToken (/home/aserdev/.vscode/extensions/github.copilot-chat-0.31.5/dist/extension.js:485:25421)
+    at sE._fetchModels (/home/aserdev/.vscode/extensions/github.copilot-chat-0.31.5/dist/extension.js:2934:3968)
+    at sE.getAllChatModels (/home/aserdev/.vscode/extensions/github.copilot-chat-0.31.5/dist/extension.js:2934:2014)
+    at Bj.getAllChatEndpoints (/home/aserdev/.vscode/extensions/github.copilot-chat-0.31.5/dist/extension.js:2934:14863)
+2025-10-07 19:11:35.166 [info] Extension host terminating: renderer closed the MessagePort
+2025-10-07 19:11:35.318 [info] Extension host with pid 30308 exiting with code 0
+2025-10-07 19:11:39.679 [info] Extension host with pid 31852 started
+2025-10-07 19:11:39.679 [info] Skipping acquiring lock for /home/aserdev/.config/Code/User/workspaceStorage/031dea4c2acfda7aba0000384e2a0d04.
+2025-10-07 19:11:39.734 [info] ExtensionService#_doActivateExtension vscode.github-authentication, startup: false, activationEvent: 'onAuthenticationRequest:github'
+2025-10-07 19:11:39.868 [info] ExtensionService#_doActivateExtension vscode.emmet, startup: false, activationEvent: 'onLanguage'
+2025-10-07 19:11:40.193 [info] ExtensionService#_doActivateExtension vscode.git-base, startup: true, activationEvent: '*'
+2025-10-07 19:11:40.325 [info] ExtensionService#_doActivateExtension vscode.github, startup: true, activationEvent: '*'
+2025-10-07 19:11:40.569 [info] Eager extensions activated
+2025-10-07 19:11:40.616 [info] ExtensionService#_doActivateExtension vscode.debug-auto-launch, startup: false, activationEvent: 'onStartupFinished'
+2025-10-07 19:11:40.628 [info] ExtensionService#_doActivateExtension vscode.merge-conflict, startup: false, activationEvent: 'onStartupFinished'
+2025-10-07 19:11:47.462 [info] ExtensionService#_doActivateExtension vscode.git, startup: false, activationEvent: 'api', root cause: vscode.github
+2025-10-07 19:11:47.703 [info] ExtensionService#_doActivateExtension GitHub.copilot, startup: false, activationEvent: 'onStartupFinished'
+2025-10-07 19:11:52.768 [info] ExtensionService#_doActivateExtension GitHub.copilot-chat, startup: false, activationEvent: 'onStartupFinished'
+2025-10-07 19:11:56.231 [info] ExtensionService#_doActivateExtension vscode.microsoft-authentication, startup: false, activationEvent: 'onAuthenticationRequest:microsoft'
+2025-10-07 19:11:58.856 [warning] [Decorations] CAPPING events from decorations provider vscode.git 5886
+2025-10-07 19:12:01.476 [warning] [Decorations] CAPPING events from decorations provider vscode.git 5886
+2025-10-07 19:12:03.347 [warning] [Decorations] CAPPING events from decorations provider vscode.git 5886
+2025-10-07 19:14:01.233 [warning] [Decorations] CAPPING events from decorations provider vscode.git 5886
+2025-10-07 19:14:02.664 [info] Extension host terminating: renderer closed the MessagePort
+2025-10-07 19:14:02.827 [info] Extension host with pid 31852 exiting with code 0
