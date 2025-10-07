@@ -1,0 +1,73 @@
+2025-10-07 19:15:15.986 [info] [GitExtensionServiceImpl] Initializing Git extension service.
+2025-10-07 19:15:15.987 [info] Using the Electron fetcher.
+2025-10-07 19:15:15.987 [info] [GitExtensionServiceImpl] Successfully activated the vscode.git extension.
+2025-10-07 19:15:15.987 [info] [GitExtensionServiceImpl] Enablement state of the vscode.git extension: true.
+2025-10-07 19:15:15.987 [info] [GitExtensionServiceImpl] Successfully registered Git commit message provider.
+2025-10-07 19:15:17.290 [info] Logged in as aserdevyt
+2025-10-07 19:15:17.702 [info] GithubAvailableEmbeddingTypesManager: Got embeddings. Primary: metis-1024-I16-Binary,text-embedding-3-small-512. Deprecated: 
+2025-10-07 19:15:17.712 [info] GithubAvailableEmbeddingTypesManager: Got embeddings. Primary: metis-1024-I16-Binary,text-embedding-3-small-512. Deprecated: 
+2025-10-07 19:15:17.727 [info] WorkspaceChunkSearchService: using embedding type metis-1024-I16-Binary
+2025-10-07 19:15:17.809 [info] FetcherService: electron-fetch succeeded
+2025-10-07 19:15:17.894 [info] FetcherService: electron-fetch succeeded
+2025-10-07 19:15:17.897 [info] Got Copilot token for aserdevyt
+2025-10-07 19:15:17.952 [info] activationBlocker from 'languageModelAccess' took for 992ms
+2025-10-07 19:15:18.513 [info] copilot token chat_enabled: true, sku: free_limited_copilot
+2025-10-07 19:15:18.513 [info] GitHub.vscode-pull-request-github extension is not yet activated.
+2025-10-07 19:15:18.610 [info] Registering default platform agent...
+2025-10-07 19:15:18.672 [info] activationBlocker from 'conversationFeature' took for 1743ms
+2025-10-07 19:15:18.699 [info] Fetched model metadata in 1659ms 60e7fe74-9530-483b-a525-f86901dd5386
+2025-10-07 19:15:18.777 [info] Latest entry: ccreq:latest.copilotmd
+2025-10-07 19:15:18.779 [info] ccreq:9bf37c2c.copilotmd | markdown
+2025-10-07 19:15:18.790 [info] BYOK: Copilot Chat known models list fetched successfully.
+2025-10-07 19:15:19.212 [info] Fetched auto model in 196ms.
+2025-10-07 19:15:50.989 [info] [GitExtensionServiceImpl] Initializing Git extension service.
+2025-10-07 19:15:50.989 [info] Using the Electron fetcher.
+2025-10-07 19:15:51.060 [info] [GitExtensionServiceImpl] Successfully activated the vscode.git extension.
+2025-10-07 19:15:51.060 [info] [GitExtensionServiceImpl] Enablement state of the vscode.git extension: true.
+2025-10-07 19:15:51.060 [info] [GitExtensionServiceImpl] Successfully registered Git commit message provider.
+2025-10-07 19:15:59.126 [info] Logged in as aserdevyt
+2025-10-07 19:15:59.574 [info] GithubAvailableEmbeddingTypesManager: Got embeddings. Primary: metis-1024-I16-Binary,text-embedding-3-small-512. Deprecated: 
+2025-10-07 19:15:59.584 [info] GithubAvailableEmbeddingTypesManager: Got embeddings. Primary: metis-1024-I16-Binary,text-embedding-3-small-512. Deprecated: 
+2025-10-07 19:15:59.584 [info] WorkspaceChunkSearchService: using embedding type metis-1024-I16-Binary
+2025-10-07 19:15:59.632 [info] FetcherService: electron-fetch succeeded
+2025-10-07 19:15:59.784 [info] FetcherService: electron-fetch succeeded
+2025-10-07 19:15:59.786 [info] Got Copilot token for aserdevyt
+2025-10-07 19:15:59.812 [info] activationBlocker from 'languageModelAccess' took for 3000ms
+2025-10-07 19:16:00.127 [info] copilot token chat_enabled: true, sku: free_limited_copilot
+2025-10-07 19:16:00.127 [info] GitHub.vscode-pull-request-github extension is not yet activated.
+2025-10-07 19:16:00.194 [info] Registering default platform agent...
+2025-10-07 19:16:00.198 [info] activationBlocker from 'conversationFeature' took for 3397ms
+2025-10-07 19:16:00.259 [info] Fetched model metadata in 1822ms 83cfb00d-9ded-40cb-8cd5-bdba05aa5e41
+2025-10-07 19:16:00.315 [info] Latest entry: ccreq:latest.copilotmd
+2025-10-07 19:16:00.316 [info] ccreq:2700f9c0.copilotmd | markdown
+2025-10-07 19:16:00.323 [info] BYOK: Copilot Chat known models list fetched successfully.
+2025-10-07 19:16:00.692 [info] Fetched auto model in 307ms.
+2025-10-07 19:16:38.521 [info] ccreq:a0190580.copilotmd | markdown
+2025-10-07 19:16:38.521 [info] ccreq:f01f361e.copilotmd | markdown
+2025-10-07 19:16:38.525 [info] request done: requestId: [172d5454-733b-4733-a03c-50fe375ed0fd] model deployment ID: []
+2025-10-07 19:16:38.542 [info] ccreq:5da7b102.copilotmd | markdown
+2025-10-07 19:16:39.894 [info] ccreq:9ef20f47.copilotmd | markdown
+2025-10-07 19:16:39.897 [info] request done: requestId: [fe7095f0-b34d-4d73-bfd8-285ecd732b2d] model deployment ID: []
+2025-10-07 19:16:41.301 [info] message 0 returned. finish reason: [stop]
+2025-10-07 19:16:41.302 [info] request done: requestId: [25ac9208-947d-4bc0-8bdd-e64c988926c3] model deployment ID: []
+2025-10-07 19:16:41.311 [info] ccreq:1aebae6d.copilotmd | success | copilot-nes-xtab | 1242ms | [XtabProvider]
+2025-10-07 19:16:41.319 [info] ccreq:16f35906.copilotmd | markdown
+2025-10-07 19:16:41.999 [info] ccreq:93672441.copilotmd | markdown
+2025-10-07 19:19:33.440 [info] request done: requestId: [e4351fb2-db48-42ff-a204-bbac70b45605] model deployment ID: []
+2025-10-07 19:19:34.248 [info] ccreq:349d391e.copilotmd | markdown
+2025-10-07 19:19:34.248 [info] ccreq:5c9840b9.copilotmd | markdown
+2025-10-07 19:19:34.248 [info] ccreq:b4efb497.copilotmd | markdown
+2025-10-07 19:19:34.248 [info] ccreq:ff5bb349.copilotmd | markdown
+2025-10-07 19:19:34.248 [info] ccreq:bdb65551.copilotmd | markdown
+2025-10-07 19:19:34.248 [info] ccreq:86578c84.copilotmd | markdown
+2025-10-07 19:19:34.248 [info] ccreq:5c10fffe.copilotmd | markdown
+2025-10-07 19:19:34.248 [info] ccreq:d8480418.copilotmd | markdown
+2025-10-07 19:19:35.612 [info] ccreq:49089ab5.copilotmd | markdown
+2025-10-07 19:19:35.954 [info] ccreq:c3e730a7.copilotmd | markdown
+2025-10-07 19:19:36.049 [info] request done: requestId: [4367ef91-751e-480e-96ea-ed98ee62872c] model deployment ID: []
+2025-10-07 19:19:36.060 [info] ccreq:8720d9ad.copilotmd | markdown
+2025-10-07 19:19:36.605 [info] ccreq:5e0778f6.copilotmd | markdown
+2025-10-07 19:19:38.948 [info] message 0 returned. finish reason: [stop]
+2025-10-07 19:19:38.948 [info] request done: requestId: [85e94a4f-a769-45db-9c02-6518d6f81aec] model deployment ID: []
+2025-10-07 19:19:38.953 [info] ccreq:b4f34784.copilotmd | success | copilot-nes-xtab | 1465ms | [XtabProvider]
+2025-10-07 19:19:39.126 [info] ccreq:0b960d94.copilotmd | markdown

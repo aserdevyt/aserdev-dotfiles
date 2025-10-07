@@ -1,0 +1,60 @@
+if ! command -v yay &> /dev/null; then
+	echo "[DEBUG] yay not found. Installing yay..."
+	sudo pacman -S --needed git base-devel
+	git clone https://aur.archlinux.org/yay.git /tmp/yay
+	cd /tmp/yay
+	makepkg -si --noconfirm
+	cd "$WORKSPACE_DIR"
+else
+	echo "[DEBUG] yay is already installed."
+fi
+#!/bin/bash
+
+# Usage: ./install [--silent]
+# Merges files and directories from this workspace into the user's home directory (~).
+# If a file/directory exists in ~, it will be replaced after confirmation (unless --silent is used).
+
+SILENT=0
+if [[ "$1" == "--silent" ]]; then
+	SILENT=1
+fi
+
+WORKSPACE_DIR="$(cd "$(dirname "$0")" && pwd)"
+HOME_DIR="$HOME"
+
+
+for ITEM in "$WORKSPACE_DIR"/* "$WORKSPACE_DIR"/.*; do
+		BASENAME="$(basename "$ITEM")"
+		TARGET="$HOME_DIR/$BASENAME"
+		# Skip the install script itself and special directories
+		if [[ "$BASENAME" == "install" || "$BASENAME" == "." || "$BASENAME" == ".." ]]; then
+			echo "[DEBUG] Skipping: $BASENAME"
+			continue
+		fi
+	echo "[DEBUG] Checking $BASENAME..."
+	if [[ -e "$TARGET" ]]; then
+		echo "[DEBUG] $TARGET exists."
+		if [[ $SILENT -eq 0 ]]; then
+			read -p "Replace $TARGET? [y/N]: " RESP
+			if [[ ! "$RESP" =~ ^[Yy]$ ]]; then
+				echo "[DEBUG] Skipped $BASENAME by user choice."
+				continue
+			fi
+		fi
+		if [[ -d "$TARGET" && ! -L "$TARGET" ]]; then
+			echo "[DEBUG] Removing directory $TARGET"
+			rm -rf "$TARGET"
+		else
+			echo "[DEBUG] Removing file or symlink $TARGET"
+			rm -f "$TARGET"
+		fi
+		echo "[DEBUG] $BASENAME replaced."
+	fi
+	if [[ -d "$ITEM" && ! -L "$ITEM" ]]; then
+		cp -r "$ITEM" "$TARGET"
+		echo "[DEBUG] Installed directory $BASENAME to $HOME_DIR"
+	else
+		cp "$ITEM" "$TARGET"
+		echo "[DEBUG] Installed file $BASENAME to $HOME_DIR"
+	fi
+done
