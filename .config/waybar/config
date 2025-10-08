@@ -40,10 +40,11 @@
     "max-length": 128
   },
 
-  "clock": {
-    "format": "{:%c}",
-    "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>"
-  },
+"clock": {
+  "format": "{:%I:%M %p | %a, %b %d %Y}",
+  "tooltip-format": "<big>{:%A, %B %d %Y}</big>\n<tt><small>{calendar}</small></tt>"
+},
+
 
   "tray": {
     "spacing": 10

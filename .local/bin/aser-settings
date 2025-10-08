@@ -1,36 +1,28 @@
 #!/usr/bin/env bash
-# 🧠 aserdev's Rofi Control Center v5.3 — "Self-Aware Edition"
+# 🧠 aserdev's Rofi Control Center v5.5 — "Screenshot Copy Edition"
 
-TERMINAL="kitty" # change if u use another one
+TERMINAL="kitty" # change if u use another terminal
 
-main_menu() {
-  options=(
-    "⚙️  Settings"
-    "🚀  Run Command"
-    "📦  Install"
-    "📋  Clipboard"
-    "😀  Emoji Picker"
-    "🧠  System Info"
-    "🔋  Power"
-    "ℹ️  About"
-  )
-
-  choice=$(printf '%s\n' "${options[@]}" | rofi -dmenu -i -p "Aser Control Center")
-
-  case "$choice" in
-    "⚙️  Settings") settings_menu ;;
-    "🚀  Run Command") rofi -show run ;;
-    "📦  Install") install_menu ;;
-    "📋  Clipboard") clipboard_menu ;;
-    "😀  Emoji Picker") rofi -show emoji ;;
-    "🧠  System Info") sysinfo_menu ;;
-    "🔋  Power") wlogout ;;
-    "ℹ️  About") rofi -e "Made by aserdev 💻 Arch btw 🦦 website: https://aserdevyt.github.io/
- TYSM:hyprland,wayland,archlinux,waybar,rofi-wayland,rofi-emoji,pluma,grimblast,aur,yay,brokefetch" ;;
-    *) exit 0 ;;
-  esac
+# 💬 Function to auto-install missing apps
+ask_install() {
+  app="$1"
+  bin="${2:-$1}" # allows checking a different binary name
+  if ! command -v "$bin" &>/dev/null; then
+    ans=$(printf "Yes\nNo" | rofi -dmenu -p "$app not found. Install?")
+    if [[ "$ans" == "Yes" ]]; then
+      if command -v yay &>/dev/null; then
+        $TERMINAL -e bash -c "yay -S $app; read -p 'Press enter to exit...'"
+      else
+        $TERMINAL -e bash -c "sudo pacman -S $app --noconfirm; read -p 'Press enter to exit...'"
+      fi
+    else
+      rofi -e "Skipping installation of $app."
+      return 1
+    fi
+  fi
 }
 
+# ⚙️ Settings Menu
 settings_menu() {
   options=(
     "🌀  Hyprland"
@@ -39,24 +31,22 @@ settings_menu() {
     "🖼️  Wallpaper"
     "⬅️  Back"
   )
-
   choice=$(printf '%s\n' "${options[@]}" | rofi -dmenu -i -p "Settings")
 
   case "$choice" in
     "🌀  Hyprland") thunar ~/.config/hypr & ;;
     "🧭  Waybar")
       thunar ~/.config/waybar &
-      pid=$!
-      wait $pid
+      wait $!
       pkill -SIGUSR2 waybar && notify-send "✅ Waybar Reloaded" "Changes applied successfully"
       ;;
     "🎛️  Rofi") thunar ~/.config/rofi & ;;
     "🖼️  Wallpaper") waypaper --open & ;;
     "⬅️  Back") main_menu ;;
-    *) exit 0 ;;
   esac
 }
 
+# 📦 Install Menu
 install_menu() {
   options=(
     "🏗️  AUR (yay)"
@@ -65,7 +55,6 @@ install_menu() {
     "🔄  Update All"
     "⬅️  Back"
   )
-
   choice=$(printf '%s\n' "${options[@]}" | rofi -dmenu -i -p "Install")
 
   case "$choice" in
@@ -92,46 +81,69 @@ install_menu() {
       '
       ;;
     "⬅️  Back") main_menu ;;
-    *) exit 0 ;;
   esac
 }
 
+# 📋 Clipboard Menu
 clipboard_menu() {
   options=(
     "📋  Open Clipboard History"
     "🧹  Clear Clipboard History"
     "⬅️  Back"
   )
-
   choice=$(printf '%s\n' "${options[@]}" | rofi -dmenu -i -p "Clipboard")
 
   case "$choice" in
     "📋  Open Clipboard History") rofi-cliphist ;;
-    "🧹  Clear Clipboard History")
-      cliphist wipe && notify-send "🧹 Clipboard Cleared"
-      ;;
+    "🧹  Clear Clipboard History") cliphist wipe && notify-send "🧹 Clipboard Cleared" ;;
     "⬅️  Back") main_menu ;;
-    *) exit 0 ;;
   esac
 }
 
-ask_install() {
-  app="$1"
-  if ! command -v "$app" &>/dev/null; then
-    ans=$(printf "Yes\nNo" | rofi -dmenu -p "$app not found. Install?")
-    if [[ "$ans" == "Yes" ]]; then
-      if command -v yay &>/dev/null; then
-        $TERMINAL -e bash -c "yay -S $app; read -p 'Press enter to exit...'"
-      else
-        $TERMINAL -e bash -c "sudo pacman -S $app; read -p 'Press enter to exit...'"
+# 📸 Screenshot / Record Menu
+# 📸 Screenshot / Record Menu
+screenshot_menu() {
+  options=(
+    "🖥️  Screenshot Screen"
+    "🟩  Screenshot Area"
+    "🎥  Screen Record (OBS)"
+    "⬅️  Back"
+  )
+  choice=$(printf '%s\n' "${options[@]}" | rofi -dmenu -i -p "Screenshot / Record")
+
+  case "$choice" in
+    "🖥️  Screenshot Screen")
+      ask_install "grimblast" || return
+      grimblast copysave screen --notify
+      notify-send "📸 Screenshot Taken!" "Full screen saved + copied ✅"
+      ;;
+    "🟩  Screenshot Area")
+      ask_install "grimblast" || return
+      grimblast copysave area --notify
+      notify-send "📸 Screenshot Taken!" "Area saved + copied ✅"
+      ;;
+    "🎥  Screen Record (OBS)")
+      # fix check for obs binary, not obs-studio
+      if ! command -v obs &>/dev/null; then
+        ans=$(printf "Yes\nNo" | rofi -dmenu -p "OBS not found. Install?")
+        if [[ "$ans" == "Yes" ]]; then
+          if command -v yay &>/dev/null; then
+            $TERMINAL -e bash -c "yay -S obs-studio; read -p 'Press enter to exit...'"
+          else
+            $TERMINAL -e bash -c "sudo pacman -S obs-studio --noconfirm; read -p 'Press enter to exit...'"
+          fi
+        else
+          rofi -e "Skipping OBS installation."
+          return
+        fi
       fi
-    else
-      rofi -e "Skipping installation of $app."
-      return 1
-    fi
-  fi
+      obs & disown
+      ;;
+    "⬅️  Back") main_menu ;;
+  esac
 }
 
+# 🧠 System Info Menu
 sysinfo_menu() {
   options=(
     "🧠  Brokefetch"
@@ -139,7 +151,6 @@ sysinfo_menu() {
     "📊  Btop"
     "⬅️  Back"
   )
-
   choice=$(printf '%s\n' "${options[@]}" | rofi -dmenu -i -p "System Info")
 
   case "$choice" in
@@ -161,9 +172,38 @@ sysinfo_menu() {
       $TERMINAL -e bash -c "btop; echo ''; read -p 'Press enter to exit...'"
       ;;
     "⬅️  Back") main_menu ;;
-    *) exit 0 ;;
   esac
 }
 
+# 🏠 Main Menu
+main_menu() {
+  options=(
+    "⚙️  Settings"
+    "🚀  Run Command"
+    "📦  Install"
+    "📋  Clipboard"
+    "😀  Emoji Picker"
+    "📸  Screenshot / Record"
+    "🧠  System Info"
+    "🔋  Power"
+    "ℹ️  About"
+  )
+  choice=$(printf '%s\n' "${options[@]}" | rofi -dmenu -i -p "Aser Control Center")
+
+  case "$choice" in
+    "⚙️  Settings") settings_menu ;;
+    "🚀  Run Command") rofi -show run ;;
+    "📦  Install") install_menu ;;
+    "📋  Clipboard") clipboard_menu ;;
+    "😀  Emoji Picker") rofi -show emoji ;;
+    "📸  Screenshot / Record") screenshot_menu ;;
+    "🧠  System Info") sysinfo_menu ;;
+    "🔋  Power") wlogout ;;
+    "ℹ️  About") rofi -e "Made by aserdev 💻 Arch btw 🦦 website: https://aserdevyt.github.io/
+TYSM: hyprland, wayland, archlinux, waybar, rofi-wayland, rofi-emoji, pluma, grimblast, aur, yay, brokefetch" ;;
+  esac
+}
+
+# 🚀 Start it up
 main_menu
 
