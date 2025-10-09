@@ -135,5 +135,6 @@ ensure_yay
 install_packages
 install_gdm
 copy_workspace
+chsh -s /usr/bin/zsh
 info "✅ All done! Merged configs, installed packages, and enabled GDM."
 
