@@ -22,7 +22,7 @@ PKGS=(
   libnm networkmanager-openvpn networkmanager-pptp networkmanager-vpnc networkmanager-openconnect
   networkmanager-l2tp networkmanager-strongswan cliphist bat yay wlogout ttf-jetbrains-mono-nerd
   fcitx5 fcitx5-configtool fcitx5-qt fcitx5-gtk fcitx5-mozc fastfetch dracula-gtk-theme
-  colloid-icon-theme noto-fonts-emoji ttf-iosevka-nerd pavucontrol vlc vlc-plugins-all fzf bat
+  colloid-icon-theme noto-fonts-emoji ttf-iosevka-nerd pavucontrol vlc vlc-plugins-all fzf bat polkit-gnome visual-studio-code-bin qbittorrent
 )
 
 # Files/dirs to skip copying from workspace
