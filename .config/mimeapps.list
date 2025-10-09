@@ -119,6 +119,15 @@ x-scheme-handler/https=com.microsoft.Edge.desktop
 application/x-shellscript=org.gnome.TextEditor.desktop
 x-scheme-handler/terminal=kitty.desktop
 
+inode/directory=thunar.desktop
+x-directory/normal=thunar.desktop
+x-scheme-handler/terminal=kitty.desktop
+x-scheme-handler/ssh=kitty.desktop
+x-scheme-handler/telnet=kitty.desktop
+text/plain=pluma.desktop
+application/x-shellscript=pluma.desktop
+application/x-desktop=pluma.desktop
+application/x-zerosize=pluma.desktop
 [Added Associations]
 audio/ogg=vlc.desktop;
 audio/vorbis=vlc.desktop;
@@ -236,15 +245,4 @@ application/xhtml+xml=com.microsoft.Edge.desktop;
 text/html=com.microsoft.Edge.desktop;
 x-scheme-handler/https=com.microsoft.Edge.desktop;
 application/x-shellscript=org.gnome.TextEditor.desktop;
-[Default Applications]
-inode/directory=thunar.desktop
-x-directory/normal=thunar.desktop
-
-x-scheme-handler/terminal=kitty.desktop
-x-scheme-handler/ssh=kitty.desktop
-x-scheme-handler/telnet=kitty.desktop
-
-text/plain=pluma.desktop
-application/x-shellscript=pluma.desktop
-application/x-desktop=pluma.desktop
-
+application/x-zerosize=pluma.desktop;

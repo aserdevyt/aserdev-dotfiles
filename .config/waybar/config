@@ -5,6 +5,7 @@
   "spacing": 6,
 
   "modules-left": [
+"custom/rofi",
     "hyprland/workspaces",
     "custom/edge",
     "custom/discord",
@@ -17,13 +18,15 @@
   ],
 
   "modules-right": [
-
     "tray",
-"custom/emoji",
-"custom/aser-settings",
+    "custom/emoji",
+    
+    "custom/aser-settings",
     "custom/swaync",
-"custom/cliphist",
-    "clock"
+    "custom/cliphist",
+"custom/volume",
+    "clock",
+    "custom/power"
   ],
 
   "hyprland/workspaces": {
@@ -40,11 +43,10 @@
     "max-length": 128
   },
 
-"clock": {
-  "format": "{:%I:%M %p | %a, %b %d %Y}",
-  "tooltip-format": "<big>{:%A, %B %d %Y}</big>\n<tt><small>{calendar}</small></tt>"
-},
-
+  "clock": {
+    "format": "{:%I:%M %p | %a, %b %d %Y}",
+    "tooltip-format": "<big>{:%A, %B %d %Y}</big>\n<tt><small>{calendar}</small></tt>"
+  },
 
   "tray": {
     "spacing": 10
@@ -77,34 +79,59 @@
     "on-click": "kitty &",
     "spacing": 8
   },
-"custom/cliphist": {
-    "format": " ",                      // the icon
-    "tooltip": "Open clipboard history", // hover text
-    "on-click": "~/.local/bin/rofi-cliphist", // opens your rofi clipboard
-    "interval": 0,                        // no auto refresh needed
+
+  "custom/cliphist": {
+    "format": " ",
+    "tooltip": "Open clipboard history",
+    "on-click": "~/.local/bin/rofi-cliphist",
+    "interval": 0,
     "return-type": "string"
-},
+  },
 
   "custom/emoji": {
     "format": "😀",
-    "tooltip": "open emojis",
+    "tooltip": "Open emojis",
     "on-click": "rofi -show emoji",
     "interval": 0
   },
-"custom/aser-settings": {
+
+  "custom/rofi": {
+    "format": " ",
+    "tooltip": "App Launcher",
+    "on-click": "rofi -show drun",
+    "interval": 0
+  },
+
+  "custom/aser-settings": {
     "format": "⚙️",
     "tooltip": "Aser Control Center",
     "on-click": "~/.local/bin/aser-settings",
     "interval": 3600
-},
-
+  },
 
   "custom/swaync": {
     "format": " ",
     "tooltip": "Open Notifications",
     "on-click": "swaync-client -t",
     "interval": 0
+  },
+"custom/volume": {
+  "format": "  {}%",
+  "tooltip": "Click to open PulseAudio settings",
+  "interval": 2,
+  "exec": "pamixer --get-volume",
+  "on-scroll-up": "pamixer -i 5",
+  "on-scroll-down": "pamixer -d 5",
+  "on-click": "pavucontrol &"
+},
+
+
+
+  "custom/power": {
+    "format": "  ",
+    "tooltip": "Power Menu",
+    "on-click": "wlogout",
+    "interval": 0
   }
 }
-
 

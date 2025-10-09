@@ -21,7 +21,7 @@ PKGS=(
   libnm networkmanager-openvpn networkmanager-pptp networkmanager-vpnc networkmanager-openconnect
   networkmanager-l2tp networkmanager-strongswan cliphist bat yay wlogout ttf-jetbrains-mono-nerd
   fcitx5 fcitx5-configtool fcitx5-qt fcitx5-gtk fcitx5-mozc fastfetch dracula-gtk-theme
-  colloid-icon-theme
+  colloid-icon-theme noto-fonts-emoji ttf-iosevka-nerd pavucontrol vlc vlc-plugins-all fzf bat
 )
 
 # Files/dirs to skip copying from workspace
@@ -79,14 +79,36 @@ install_gdm() {
     debug "GDM already installed."
   fi
   info "Enabling GDM..."
-  sudo systemctl enable --now gdm
+  sudo systemctl enable gdm
 }
 
+enable_services() {
+  info "Checking and enabling essential services (system-wide)..."
+
+  # --- NetworkManager check ---
+  if ! systemctl is-active --quiet NetworkManager; then
+    info "NetworkManager not running, enabling it globally..."
+    sudo systemctl enable --now NetworkManager.service
+  else
+    debug "NetworkManager is active ✅"
+  fi
+
+  # --- PipeWire check ---
+  if ! systemctl --user is-active --quiet pipewire 2>/dev/null; then
+    info "PipeWire not running for current user, enabling global user services..."
+    sudo systemctl enable --global pipewire.service pipewire-pulse.service wireplumber.service
+    info "Enabled PipeWire globally (for all users)"
+  else
+    debug "PipeWire already active ✅"
+  fi
+}
+
+
 copy_workspace() {
-if ! command -v rsync &>/dev/null; then
-  echo "[DEBUG] rsync not found. Installing..."
-  sudo pacman -S --noconfirm rsync
-fi
+  if ! command -v rsync &>/dev/null; then
+    echo "[DEBUG] rsync not found. Installing..."
+    sudo pacman -S --noconfirm rsync
+  fi
 
   debug "Merging files from workspace: $WORKSPACE_DIR → $HOME_DIR"
   shopt -s nullglob dotglob
@@ -98,21 +120,18 @@ fi
     BASENAME="$(basename "$ITEM")"
     TARGET="$HOME_DIR/$BASENAME"
 
-    # skip special dirs
     for skip in "${SKIP_BASENAMES[@]}"; do
       [[ "$BASENAME" == "$skip" ]] && { debug "Skipping $BASENAME"; continue 2; }
     done
 
     debug "Processing $BASENAME → $TARGET"
 
-    # if it's a dir, merge it using rsync (overrides conflicting files only)
     if [[ -d "$ITEM" && ! -L "$ITEM" ]]; then
       debug "Merging directory $BASENAME"
       mkdir -p "$TARGET"
       rsync -a --info=NAME --omit-dir-times -- "$ITEM"/ "$TARGET"/
       info "Merged $BASENAME ✅"
     else
-      # for files, overwrite if needed
       if [[ -e "$TARGET" ]]; then
         if [[ $SILENT -eq 0 ]]; then
           ask_yes_no "Replace $TARGET? [y/N]: " || { debug "Skipped $BASENAME"; continue; }
@@ -134,7 +153,9 @@ check_internet
 ensure_yay
 install_packages
 install_gdm
+enable_services
 copy_workspace
 chsh -s /usr/bin/zsh
-info "✅ All done! Merged configs, installed packages, and enabled GDM."
+
+info "✅ All done! Merged configs, installed packages, enabled GDM, and made sure PipeWire + NetworkManager are running."
 

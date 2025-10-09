@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# 🧠 aserdev's Rofi Control Center v5.5 — "Screenshot Copy Edition"
+# 🧠 aserdev's Rofi Control Center v5.7 — "Keybinds + Hyprpicker + Audio Edition"
 
-TERMINAL="kitty" # change if u use another terminal
+TERMINAL="kitty"
+EDITOR="${EDITOR:-nano}"
 
-# 💬 Function to auto-install missing apps
+# 💬 auto install missing apps
 ask_install() {
   app="$1"
-  bin="${2:-$1}" # allows checking a different binary name
+  bin="${2:-$1}"
   if ! command -v "$bin" &>/dev/null; then
     ans=$(printf "Yes\nNo" | rofi -dmenu -p "$app not found. Install?")
     if [[ "$ans" == "Yes" ]]; then
@@ -29,8 +30,12 @@ settings_menu() {
     "🧭  Waybar"
     "🎛️  Rofi"
     "🖼️  Wallpaper"
+    "⌨️  Keybinds"
+    "🎨  Color Picker"
+    "🔊  Audio Settings"
     "⬅️  Back"
   )
+
   choice=$(printf '%s\n' "${options[@]}" | rofi -dmenu -i -p "Settings")
 
   case "$choice" in
@@ -42,6 +47,39 @@ settings_menu() {
       ;;
     "🎛️  Rofi") thunar ~/.config/rofi & ;;
     "🖼️  Wallpaper") waypaper --open & ;;
+    "⌨️  Keybinds")
+      if [ -f ~/.config/hypr/binds.conf ]; then
+        $TERMINAL -e bash -c "$EDITOR ~/.config/hypr/binds.conf; read -p 'Press enter to exit...'"
+      else
+        rofi -e "binds.conf not found 😭"
+      fi
+      ;;
+    "🎨  Color Picker")
+      ask_install "hyprpicker" || return
+      color=$(hyprpicker -a)
+      if [ -n "$color" ]; then
+        wl-copy "$color"
+        notify-send "🎨 Color Copied!" "Picked: $color ✅"
+      else
+        rofi -e "No color picked 💀"
+      fi
+      ;;
+    "🔊  Audio Settings")
+      # detect if PulseAudio or PipeWire is running
+      if command -v pactl &>/dev/null; then
+        ask_install "pavucontrol" || return
+        pavucontrol &
+      elif command -v pw-cli &>/dev/null; then
+        if command -v helvum &>/dev/null; then
+          helvum &
+        else
+          ask_install "helvum" || return
+          helvum &
+        fi
+      else
+        rofi -e "No audio system detected 💀"
+      fi
+      ;;
     "⬅️  Back") main_menu ;;
   esac
 }
@@ -72,11 +110,11 @@ install_menu() {
       ;;
     "🔄  Update All")
       $TERMINAL -e bash -c '
-        echo "Updating system..."; 
+        echo "Updating system...";
         sudo pacman -Syu --noconfirm;
         flatpak update -y;
         if command -v yay &>/dev/null; then yay -Syu --noconfirm; fi;
-        echo "✅ All updates done!"; 
+        echo "✅ All updates done!";
         read -p "Press enter to exit..."
       '
       ;;
@@ -101,7 +139,6 @@ clipboard_menu() {
 }
 
 # 📸 Screenshot / Record Menu
-# 📸 Screenshot / Record Menu
 screenshot_menu() {
   options=(
     "🖥️  Screenshot Screen"
@@ -123,7 +160,6 @@ screenshot_menu() {
       notify-send "📸 Screenshot Taken!" "Area saved + copied ✅"
       ;;
     "🎥  Screen Record (OBS)")
-      # fix check for obs binary, not obs-studio
       if ! command -v obs &>/dev/null; then
         ans=$(printf "Yes\nNo" | rofi -dmenu -p "OBS not found. Install?")
         if [[ "$ans" == "Yes" ]]; then
@@ -199,11 +235,14 @@ main_menu() {
     "📸  Screenshot / Record") screenshot_menu ;;
     "🧠  System Info") sysinfo_menu ;;
     "🔋  Power") wlogout ;;
-    "ℹ️  About") rofi -e "Made by aserdev 💻 Arch btw 🦦 website: https://aserdevyt.github.io/
-TYSM: hyprland, wayland, archlinux, waybar, rofi-wayland, rofi-emoji, pluma, grimblast, aur, yay, brokefetch" ;;
+    "ℹ️  About")
+      rofi -e "Made by aserdev 💻 Arch btw 🦦
+Website: https://aserdevyt.github.io/
+TYSM: hyprland, wayland, archlinux, waybar, rofi-wayland, rofi-emoji, grimblast, yay, brokefetch"
+      ;;
   esac
 }
 
-# 🚀 Start it up
+# 🚀 start
 main_menu
 

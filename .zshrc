@@ -1,5 +1,3 @@
-source ~/.zsh_env
-
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
@@ -79,7 +77,7 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git z archlinux sudo zsh-autosuggestions zsh-syntax-highlighting)
+plugins=(git archlinux z zsh-autosuggestions zsh-syntax-highlighting zsh-completions fzf-tab you-should-use sudo colored-man-pages)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -111,9 +109,21 @@ source $ZSH/oh-my-zsh.sh
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
+source ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+source ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+source ~/.oh-my-zsh/custom/plugins/fzf-tab/fzf-tab.plugin.zsh
+# colored man pages 😎
+export LESS_TERMCAP_mb=$'[1;31m'
+export LESS_TERMCAP_md=$'[1;36m'
+export LESS_TERMCAP_me=$'[0m'
+export LESS_TERMCAP_se=$'[0m'
+export LESS_TERMCAP_so=$'[1;44;33m'
+export LESS_TERMCAP_ue=$'[0m'
+export LESS_TERMCAP_us=$'[1;32m'
+
+source ~/.zsh_aliases
+source ~/.zsh_env
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-setopt CORRECT
 
-source ~/.zsh_aliases
