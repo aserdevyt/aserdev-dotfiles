@@ -188,7 +188,6 @@ install_plugins() {
     "https://github.com/zsh-users/zsh-syntax-highlighting.git|$PLUGINS_DIR/zsh-syntax-highlighting|zsh-syntax-highlighting"
     "https://github.com/zsh-users/zsh-completions.git|$PLUGINS_DIR/zsh-completions|zsh-completions"
     "https://github.com/Aloxaf/fzf-tab.git|$PLUGINS_DIR/fzf-tab|fzf-tab"
-    "https://github.com/denysdovhan/you-should-use.git|$PLUGINS_DIR/you-should-use|you-should-use"
   )
 
   for entry in "${plugins[@]}"; do
@@ -209,7 +208,7 @@ write_zshrc() {
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="powerlevel10k/powerlevel10k"
 
-plugins=(git archlinux z zsh-autosuggestions zsh-syntax-highlighting zsh-completions fzf-tab you-should-use sudo colored-man-pages)
+plugins=(git archlinux z zsh-autosuggestions zsh-syntax-highlighting zsh-completions fzf-tab sudo colored-man-pages)
 
 # enable oh-my-zsh core
 source "$ZSH/oh-my-zsh.sh"
