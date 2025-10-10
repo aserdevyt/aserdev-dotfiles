@@ -145,7 +145,7 @@ install_sddm() {
     debug "SDDM already installed."
   fi
   info "Enabling SDDM..."
-  sudo systemctl enable --now sddm.service
+  sudo systemctl enable sddm
 }
 
 enable_services() {
