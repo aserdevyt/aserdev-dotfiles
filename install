@@ -1,12 +1,29 @@
 #!/usr/bin/env bash
-# aserdev's improved Arch dotfile installer — merges configs safely 💀
-# Now merged with: oh-my-zsh install + powerlevel10k + plugins + .zshrc writer
+# aserdev's improved Arch dotfile installer — patched, safer, and logs everything 💀
+# Saved: aserdev-installer-fixed.sh
 set -euo pipefail
+set -o errtrace
 IFS=$'\n\t'
 
 WORKSPACE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOME_DIR="${HOME:-/root}"
 SILENT=0
+
+# Logging
+TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
+LOGFILE="$HOME_DIR/aserdev-installer.$TIMESTAMP.log"
+exec > >(tee -a "$LOGFILE") 2>&1
+
+# ANSI color variables
+RED="\033[31m"
+GREEN="\033[32m"
+YELLOW="\033[33m"
+BLUE="\033[34m"
+MAGENTA="\033[35m"
+CYAN="\033[36m"
+WHITE="\033[37m"
+BOLD="\033[1m"
+RESET="\033[0m"
 
 # Packages list
 PKGS=(
@@ -22,7 +39,7 @@ PKGS=(
   libnm networkmanager-openvpn networkmanager-pptp networkmanager-vpnc networkmanager-openconnect
   networkmanager-l2tp networkmanager-strongswan cliphist bat yay wlogout ttf-jetbrains-mono-nerd
   fcitx5 fcitx5-configtool fcitx5-qt fcitx5-gtk fcitx5-mozc fastfetch dracula-gtk-theme
-  colloid-icon-theme noto-fonts-emoji ttf-iosevka-nerd pavucontrol vlc vlc-plugins-all fzf bat polkit-gnome visual-studio-code-bin qbittorrent
+  colloid-icon-theme noto-fonts-emoji ttf-iosevka-nerd pavucontrol vlc vlc-plugins-all fzf bat polkit-gnome visual-studio-code-bin qbittorrent figlet rsync
 )
 
 # Files/dirs to skip copying from workspace
@@ -35,10 +52,26 @@ PLUGINS_DIR="$ZSH_CUSTOM/plugins"
 THEMES_DIR="$ZSH_CUSTOM/themes"
 ZSHRC="$HOME_DIR/.zshrc"
 
-log()   { printf '%s\n' "$*"; }
-debug() { log "[DEBUG] $*"; }
-info()  { log "[INFO]  $*"; }
-err()   { log "[ERROR] $*" >&2; }
+# GitHub issues URL for reporting failures
+ISSUES_URL="https://github.com/aserdevyt/aserdev-os/issues"
+
+log()   { printf '%b\n' "$*"; }
+debug() { log "${CYAN}[DEBUG]${RESET} $*"; }
+info()  { log "${GREEN}[INFO] ${RESET}$*"; }
+err()   { log "${RED}[ERROR]${RESET} $*" >&2; }
+
+on_error() {
+  local lineno=${1:-unknown}
+  err "Script failed (line: $lineno)."
+  err "Log saved to: $LOGFILE"
+  echo
+  echo -e "${YELLOW}If this looks like a bug or you need help, please open an issue here:${RESET}"
+  echo -e "${BLUE}${ISSUES_URL}${RESET}"
+  echo
+  exit 1
+}
+trap 'on_error $LINENO' ERR
+trap 'echo -e "\n${YELLOW}Interrupted by user. Log: $LOGFILE${RESET}"; exit 130' INT
 
 ask_yes_no() {
   local prompt="${1:-Continue? [y/N]: }"
@@ -47,6 +80,30 @@ ask_yes_no() {
   fi
   read -r -p "$prompt" ans
   [[ "$ans" =~ ^[Yy]$ ]]
+}
+
+wait_for_pacman() {
+  local timeout=60
+  while [[ -f /var/lib/pacman/db.lck && $timeout -gt 0 ]]; do
+    debug "pacman/db.lck present — waiting... ($timeout)"
+    sleep 1
+    ((timeout--))
+  done
+  if [[ -f /var/lib/pacman/db.lck ]]; then
+    err "pacman is locked. Try again later."
+    exit 1
+  fi
+}
+
+ensure_tool() {
+  local tool=$1 pkg=${2:-$1}
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    wait_for_pacman
+    info "Installing missing tool: $pkg"
+    sudo pacman -S --noconfirm --needed "$pkg"
+  else
+    debug "$tool present"
+  fi
 }
 
 check_internet() {
@@ -60,62 +117,61 @@ check_internet() {
 }
 
 ensure_yay() {
-  if ! command -v yay &>/dev/null; then
-    info "yay not found. Installing..."
-    sudo pacman -S --noconfirm --needed git base-devel
-    tmpdir="$(mktemp -d)"
-    git clone https://aur.archlinux.org/yay.git "$tmpdir"
-    pushd "$tmpdir" >/dev/null
-    makepkg -si --noconfirm
-    popd >/dev/null
-    rm -rf "$tmpdir"
-  else
-    debug "yay is already installed."
+  if command -v yay &>/dev/null 2>&1; then
+    debug "yay present"
+    return
   fi
+  info "yay not found. Installing prerequisites and yay..."
+  wait_for_pacman
+  sudo pacman -S --noconfirm --needed git base-devel || err "Failed to install base-devel/git"
+  tmpdir="$(mktemp -d)"
+  git clone https://aur.archlinux.org/yay.git "$tmpdir" || { err "Failed to clone yay"; rm -rf "$tmpdir"; exit 1; }
+  pushd "$tmpdir" >/dev/null
+  makepkg -si --noconfirm || { err "makepkg for yay failed"; popd >/dev/null; rm -rf "$tmpdir"; exit 1; }
+  popd >/dev/null
+  rm -rf "$tmpdir"
 }
 
 install_packages() {
-  info "Installing packages with yay..."
-  yay -Syu --noconfirm --needed "${PKGS[@]}"
+  info "Installing packages with yay (no full system upgrade)..."
+  yay -S --noconfirm --needed "${PKGS[@]}" || err "Some packages failed to install; check yay output above and the log $LOGFILE"
 }
 
-install_gdm() {
-  if ! pacman -Qi gdm &>/dev/null; then
-    info "Installing GDM..."
-    sudo pacman -S --noconfirm gdm
+install_sddm() {
+  if ! pacman -Qi sddm &>/dev/null; then
+    info "Installing SDDM..."
+    sudo pacman -S --noconfirm sddm
   else
-    debug "GDM already installed."
+    debug "SDDM already installed."
   fi
-  info "Enabling GDM..."
-  sudo systemctl enable gdm
+  info "Enabling SDDM..."
+  sudo systemctl enable --now sddm.service
 }
 
 enable_services() {
   info "Checking and enabling essential services (system-wide)..."
 
   # --- NetworkManager check ---
-  if ! systemctl is-active --quiet NetworkManager; then
+  if ! systemctl is-active --quiet NetworkManager 2>/dev/null; then
     info "NetworkManager not running, enabling it globally..."
-    sudo systemctl enable --now NetworkManager.service
+    sudo systemctl enable --now NetworkManager.service || err "Failed to enable NetworkManager"
   else
     debug "NetworkManager is active ✅"
   fi
 
   # --- PipeWire check ---
   if ! systemctl --user is-active --quiet pipewire 2>/dev/null; then
-    info "PipeWire not running for current user, enabling global user services..."
-    sudo systemctl enable --global pipewire.service pipewire-pulse.service wireplumber.service
-    info "Enabled PipeWire globally (for all users)"
+    info "Attempting to enable PipeWire services system-wide..."
+    # --global is supported on systemd; use careful enablement
+    sudo systemctl enable --global pipewire.service pipewire-pulse.service wireplumber.service || debug "Global enable may not be supported in chroot/container"
+    info "Enabled PipeWire globally (best-effort)"
   else
-    debug "PipeWire already active ✅"
+    debug "PipeWire already active for user ✅"
   fi
 }
 
 copy_workspace() {
-  if ! command -v rsync &>/dev/null; then
-    echo "[DEBUG] rsync not found. Installing..."
-    sudo pacman -S --noconfirm rsync
-  fi
+  ensure_tool rsync rsync
 
   debug "Merging files from workspace: $WORKSPACE_DIR → $HOME_DIR"
   shopt -s nullglob dotglob
@@ -239,18 +295,18 @@ EOF
 }
 
 set_default_shell_to_zsh() {
-  if [[ "$(basename "$(getent passwd "$USER" | cut -d: -f7 2>/dev/null || echo "")")" != "zsh" ]]; then
-    if command -v chsh &>/dev/null; then
-      if [[ $SILENT -eq 0 ]]; then
-        ask_yes_no "Change default shell to /usr/bin/zsh for $USER? [y/N]: " || { info "Skipping chsh."; return; }
-      fi
-      info "Changing default shell to /usr/bin/zsh..."
-      chsh -s "$(command -v zsh)" || err "chsh failed. You may need to run manually with sudo."
-    else
-      info "chsh not available — please change your shell to zsh manually."
-    fi
+  # Determine actual non-root user to change shell for
+  if [[ -n "${SUDO_USER:-}" && "${SUDO_USER}" != "root" ]]; then
+    ACTUAL_USER="$SUDO_USER"
   else
-    info "Default shell already zsh."
+    ACTUAL_USER="$USER"
+  fi
+
+  if [[ "$ACTUAL_USER" == "root" ]]; then
+    info "Script running as root; skipping chsh. Run 'chsh -s $(command -v zsh) <user>' manually."
+  else
+    info "Setting default shell to zsh for $ACTUAL_USER"
+    sudo -u "$ACTUAL_USER" chsh -s "$(command -v zsh)" "$ACTUAL_USER" || debug "chsh failed or user must run it manually."
   fi
 }
 
@@ -259,11 +315,13 @@ if [[ "${1:-}" == "--silent" ]]; then
   SILENT=1
 fi
 
-debug "Starting dotfile install..."
+info "Starting dotfile install... Log: $LOGFILE"
 check_internet
+ensure_tool rsync rsync
+ensure_tool figlet figlet
 ensure_yay
 install_packages
-install_gdm
+install_sddm
 enable_services
 copy_workspace
 
@@ -271,6 +329,7 @@ copy_workspace
 if ! command -v git &>/dev/null || ! command -v zsh &>/dev/null; then
   info "git and/or zsh missing after package install — attempting to install minimal via pacman..."
   if command -v pacman &>/dev/null; then
+    wait_for_pacman
     sudo pacman -S --noconfirm --needed git zsh curl wget || true
   fi
 fi
@@ -280,9 +339,20 @@ install_powerlevel10k
 install_plugins
 write_zshrc
 
-# switch shell at the end
-chsh -s /usr/bin/zsh || true
+# change shell safely
+set_default_shell_to_zsh
 
-info "✅ All done! Merged configs, installed packages, set up oh-my-zsh + p10k + plugins, enabled GDM, and made sure PipeWire + NetworkManager are running."
-info "Backup of any previous .zshrc saved as ~/.zshrc.bak.<ts> if it existed. Run 'exec zsh' to start the new shell and 'p10k configure' to tweak the theme."
+clear
+if command -v figlet &>/dev/null; then
+  figlet "warning" || true
+fi
 
+echo -e "${YELLOW}${BOLD}When you reboot you will be put in SDDM but don't rush into login,${RESET}"
+echo -e "${YELLOW}click your username first, then the gear icon, and select Hyprland session${RESET}"
+echo -e "${YELLOW}before logging in. Otherwise you may end up in a gnome session which you don't want.${RESET}"
+info "✅ All done! Merged configs, installed packages, set up oh-my-zsh + p10k + plugins, enabled SDDM, and made sure PipeWire + NetworkManager are running."
+info "Log file: $LOGFILE"
+info "If something bad happened, please open an issue: $ISSUES_URL"
+
+# Helpful hint
+info "Run 'exec zsh' to start the new shell and 'p10k configure' to tweak the theme."
