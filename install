@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# aserdev's improved Arch dotfile installer — patched, safer, and logs everything 💀
-# Saved: aserdev-installer-fixed.sh
+# aserdev's improved Arch dotfile installer — patched, safer, logs everything, and writes to /etc/skel 💀
+# Saved: aserdev-installer-with-skel.sh
 set -euo pipefail
 set -o errtrace
 IFS=$'\n\t'
@@ -325,6 +325,56 @@ install_sddm
 enable_services
 copy_workspace
 
+# --- NEW: copy workspace into /etc/skel so future users inherit the same setup ---
+info "Preparing dotfiles for /etc/skel (sanitizing sensitive files)..."
+if [[ -d "$WORKSPACE_DIR" ]]; then
+  tmp_skel="$(mktemp -d)"
+  debug "Creating sanitized copy at $tmp_skel"
+
+  # rsync from workspace to tmp dir while excluding known sensitive / unnecessary paths
+  RSYNC_EXCLUDES=( --exclude ".git" --exclude ".gitignore" --exclude "install" --exclude ".ssh" --exclude ".gnupg" \
+                  --exclude ".cache" --exclude "node_modules" --exclude "*.pem" --exclude "*.key" \
+                  --exclude ".env" --exclude "*.secret" --exclude "*.crt" )
+  rsync -a --omit-dir-times "${RSYNC_EXCLUDES[@]}" "$WORKSPACE_DIR"/ "$tmp_skel"/
+
+  # Extra sanitization: remove any private key-like files that might slip through
+  find "$tmp_skel" -type f \( -iname "id_*" -o -iname "*id_rsa*" -o -iname "*.pem" -o -iname "*.key" -o -iname "*.p12" \) -exec rm -f {} + || true
+
+  # Tighten permissions inside the sanitized copy (dirs 755, files 644)
+  find "$tmp_skel" -type d -exec chmod 0755 {} + || true
+  find "$tmp_skel" -type f -exec chmod 0644 {} + || true
+
+  # Install sanitized copy into /etc/skel
+  sudo rm -rf /etc/skel/* || debug "/etc/skel cleanup failed (maybe empty or permission issue)"
+  sudo mkdir -p /etc/skel
+  sudo cp -a "$tmp_skel"/. /etc/skel/
+  sudo chown -R root:root /etc/skel
+
+  # Defensive cleanup: ensure no user secrets remain
+  sudo rm -rf /etc/skel/.ssh /etc/skel/.gnupg /etc/skel/.cache || true
+
+  # clean tmp
+  rm -rf "$tmp_skel" || true
+  info "✅ /etc/skel updated (sanitized) — new users will start with your setup!"
+else
+  err "Workspace dir $WORKSPACE_DIR not found; skipping /etc/skel copy."
+fi
+
+# --- Set default shell for future users (if writable) ---
+zsh_path="$(command -v zsh || echo /bin/zsh)"
+if [[ -w /etc/default/useradd ]]; then
+  # replace existing SHELL= line or append if missing
+  if grep -q "^SHELL=" /etc/default/useradd 2>/dev/null; then
+    sudo sed -i "s#^SHELL=.*#SHELL=$zsh_path#" /etc/default/useradd || true
+  else
+    echo "SHELL=$zsh_path" | sudo tee -a /etc/default/useradd >/dev/null || true
+  fi
+  info "Set default shell for new users to $zsh_path"
+else
+  debug "/etc/default/useradd not writable; skipping default shell update"
+fi
+
+
 # ensure git & zsh are available before oh-my-zsh steps
 if ! command -v git &>/dev/null || ! command -v zsh &>/dev/null; then
   info "git and/or zsh missing after package install — attempting to install minimal via pacman..."
@@ -347,12 +397,11 @@ if command -v figlet &>/dev/null; then
   figlet "warning" || true
 fi
 
-echo -e "${YELLOW}${BOLD}When you reboot you will be put in SDDM but don't rush into login,${RESET}"
-echo -e "${YELLOW}click your username first, then the gear icon, and select Hyprland session${RESET}"
-echo -e "${YELLOW}before logging in. Otherwise you may end up in a gnome session which you don't want.${RESET}"
+
 info "✅ All done! Merged configs, installed packages, set up oh-my-zsh + p10k + plugins, enabled SDDM, and made sure PipeWire + NetworkManager are running."
 info "Log file: $LOGFILE"
 info "If something bad happened, please open an issue: $ISSUES_URL"
 
 # Helpful hint
 info "Run 'exec zsh' to start the new shell and 'p10k configure' to tweak the theme."
+
