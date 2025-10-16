@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# aserdev's improved Arch dotfile installer — patched, safer, logs everything, and writes to /etc/skel 💀
-# Saved: aserdev-installer-with-skel.sh
+
 set -euo pipefail
 set -o errtrace
 IFS=$'\n\t'
@@ -39,7 +38,7 @@ PKGS=(
   libnm networkmanager-openvpn networkmanager-pptp networkmanager-vpnc networkmanager-openconnect
   networkmanager-l2tp networkmanager-strongswan cliphist bat yay wlogout ttf-jetbrains-mono-nerd
   fcitx5 fcitx5-configtool fcitx5-qt fcitx5-gtk fcitx5-mozc fastfetch dracula-gtk-theme
-  colloid-icon-theme noto-fonts-emoji ttf-iosevka-nerd pavucontrol vlc vlc-plugins-all fzf bat polkit-gnome visual-studio-code-bin qbittorrent figlet rsync jdk-openjdk
+  colloid-icon-theme noto-fonts-emoji ttf-iosevka-nerd pavucontrol vlc vlc-plugins-all fzf bat polkit-gnome visual-studio-code-bin qbittorrent figlet rsync jdk-openjdk inotify-tools
 )
 
 # Files/dirs to skip copying from workspace
@@ -397,11 +396,88 @@ if command -v figlet &>/dev/null; then
   figlet "warning" || true
 fi
 
-
+echo -e "${YELLOW}${BOLD}When you reboot you will be put in SDDM but don't rush into login,${RESET}"
+echo -e "${YELLOW}click your username first, then the gear icon, and select Hyprland session${RESET}"
+echo -e "${YELLOW}before logging in. Otherwise you may end up in a gnome session which you don't want.${RESET}"
 info "✅ All done! Merged configs, installed packages, set up oh-my-zsh + p10k + plugins, enabled SDDM, and made sure PipeWire + NetworkManager are running."
 info "Log file: $LOGFILE"
 info "If something bad happened, please open an issue: $ISSUES_URL"
 
 # Helpful hint
 info "Run 'exec zsh' to start the new shell and 'p10k configure' to tweak the theme."
+
+# --- Install user-level Waybar auto-reload service (uses inotify-tools) ---
+info "Installing Waybar auto-reload (systemd --user) for primary user..."
+# determine target user/home (respect sudo)
+if [[ -n "${SUDO_USER:-}" && "${SUDO_USER}" != "root" ]]; then
+  TARGET_USER="$SUDO_USER"
+  TARGET_HOME="$(getent passwd "$TARGET_USER" | cut -d: -f6)"
+else
+  TARGET_USER="$(id -un)"
+  TARGET_HOME="$HOME_DIR"
+fi
+info "Target user: $TARGET_USER (home: $TARGET_HOME)"
+
+# create watcher script and systemd unit as the target user
+sudo -u "$TARGET_USER" bash -lc '
+mkdir -p "$HOME/.local/bin" "$HOME/.config/systemd/user"
+cat > "$HOME/.local/bin/waybar-autoreload.sh" <<'BASH'
+#!/usr/bin/env bash
+# waybar-autoreload — watches ~/.config/waybar and sends SIGUSR2 to waybar on changes
+WATCH_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/waybar"
+
+# require inotifywait
+if ! command -v inotifywait &>/dev/null; then
+  notify-send "waybar-autoreload" "inotifywait not found — install inotify-tools"
+  echo "ERROR: inotifywait not found. Install inotify-tools (pacman -S inotify-tools)"; exit 1
+fi
+
+# Ensure directory exists
+if [[ ! -d "$WATCH_DIR" ]]; then
+  notify-send "waybar-autoreload" "Watch dir missing: $WATCH_DIR"
+  echo "Watch dir missing: $WATCH_DIR"; exit 1
+fi
+
+notify-send "waybar-autoreload" "Watching: $WATCH_DIR"
+
+# debounce: avoid multiple reloads within 1s
+last=0
+inotifywait -m -r -e close_write,create,delete,move --format '%w%f' "$WATCH_DIR" 2>/dev/null |
+while read -r file; do
+  now=$(date +%s)
+  if (( now - last < 1 )); then
+    continue
+  fi
+  last=$now
+  # reload waybar (send SIGUSR2)
+  pkill -SIGUSR2 waybar 2>/dev/null && notify-send "Waybar" "Reloaded (trigger: ${file##*/})"
+done
+BASH
+
+chmod +x "$HOME/.local/bin/waybar-autoreload.sh"
+
+cat > "$HOME/.config/systemd/user/waybar-autoreload.service" <<'UNIT'
+[Unit]
+Description=Auto-reload Waybar on config changes (~/.config/waybar)
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/waybar-autoreload.sh
+Restart=always
+RestartSec=2
+# keep environment sane for script
+Environment=XDG_CONFIG_HOME=%h/.config
+
+[Install]
+WantedBy=default.target
+UNIT
+'
+
+# reload & enable the user service (best-effort)
+sudo -u "$TARGET_USER" systemctl --user daemon-reload || debug "user daemon-reload failed"
+sudo -u "$TARGET_USER" systemctl --user enable --now waybar-autoreload.service || debug "could not enable waybar-autoreload.service (maybe no user session)"
+
+info "Waybar auto-reload setup attempted for $TARGET_USER. If you see issues, enable it manually for the user."
+
 
