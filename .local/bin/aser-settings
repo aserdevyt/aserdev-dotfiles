@@ -160,18 +160,40 @@ install_menu() {
   choice=$(printf '%s\n' "${options[@]}" | rofi -dmenu -i -p "Install")
 
   case "$choice" in
-    "🏗️  AUR (yay)")
-      pkg=$(rofi -dmenu -p "AUR package:")
-      [[ -n "$pkg" ]] && $TERMINAL -e bash -c "yay -S $pkg; read -p 'Press enter to exit...'"
-      ;;
+"🏗️  AUR (yay)")
+  pkg=$(rofi -dmenu -p "AUR package:")
+  [[ -n "$pkg" ]] && $TERMINAL -e bash -c "yay -S $pkg; read -p 'Press enter to exit...'"
+  ;;
+
+
     "📦  Pacman")
-      pkg=$(rofi -dmenu -p "Pacman package:")
+      mode=$(printf "🔍 Search\n📦 Direct Install" | rofi -dmenu -p "Pacman Mode")
+      if [[ "$mode" == "🔍 Search" ]]; then
+        query=$(rofi -dmenu -p "Search Pacman:")
+        [[ -z "$query" ]] && return
+        results=$(pacman -Ss "$query" | awk '{print $1}' | sed 's/.*\///' | head -n 50)
+        pkg=$(printf '%s\n' "$results" | rofi -dmenu -p "Select package:")
+        [[ -z "$pkg" ]] && return
+      else
+        pkg=$(rofi -dmenu -p "Pacman package:")
+      fi
       [[ -n "$pkg" ]] && $TERMINAL -e bash -c "sudo pacman -S $pkg; read -p 'Press enter to exit...'"
       ;;
+
     "📦  Flatpak")
-      pkg=$(rofi -dmenu -p "Flatpak package:")
+      mode=$(printf "🔍 Search\n📦 Direct Install" | rofi -dmenu -p "Flatpak Mode")
+      if [[ "$mode" == "🔍 Search" ]]; then
+        query=$(rofi -dmenu -p "Search Flatpak:")
+        [[ -z "$query" ]] && return
+        results=$(flatpak search "$query" | awk 'NR>1 {print $1}' | head -n 50)
+        pkg=$(printf '%s\n' "$results" | rofi -dmenu -p "Select Flatpak package:")
+        [[ -z "$pkg" ]] && return
+      else
+        pkg=$(rofi -dmenu -p "Flatpak package (ID):")
+      fi
       [[ -n "$pkg" ]] && $TERMINAL -e bash -c "flatpak install -y $pkg; read -p 'Press enter to exit...'"
       ;;
+
     "🔄  Update All")
       $TERMINAL -e bash -c '
 echo "Updating system..."
