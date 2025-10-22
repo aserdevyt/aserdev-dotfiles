@@ -20,7 +20,7 @@
   "modules-right": [
     "tray",
     "custom/emoji",
-    
+    "custom/kdeconnect",
     "custom/aser-settings",
     "custom/swaync",
     "custom/cliphist",
@@ -125,7 +125,12 @@
   "on-click": "pavucontrol &"
 },
 
-
+  "custom/kdeconnect": {
+    "format": "📱 ",
+    "tooltip": "Open Notifications",
+    "on-click": "kdeconnect-app",
+    "interval": 0
+  },
 
   "custom/power": {
     "format": "  ",
