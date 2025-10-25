@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 🎥 aserdev's wf-recorder Rofi menu 💀
-# Dependencies: wf-recorder, rofi (or wofi)
+# Dependencies: wf-recorder, rofi 
 
 OUTPUT="$HOME/Videos/recording-$(date +%Y%m%d-%H%M%S).mp4"
 
