@@ -1,16 +1,13 @@
 #!/usr/bin/env bash
-# 🧠 aserdev's Rofi Control Center — Remade (Pluma + paused fetches)
-# "Keybinds + Hyprpicker + Audio + All Settings"
-# Minimal deps: rofi, notify-send, wl-clipboard (wl-copy), a terminal (kitty preferred)
+# 🧠 aserdev's Rofi Control Center — Simplified with Screenrec Integration
+# Minimal deps: rofi, notify-send, wl-clipboard, a terminal (kitty preferred)
 set -euo pipefail
 IFS=$'\n\t'
 
-# ===== Configurable vars =====
 TERMINAL="${TERMINAL:-kitty}"
-EDITOR="${EDITOR:-nano}"          # fallback editor inside terminal
-ROFI_CMD="${ROFI_CMD:-rofi -dmenu -i -p}"  # helper for dmenu prompts
+EDITOR="${EDITOR:-nano}"
+ROFI_CMD="${ROFI_CMD:-rofi -dmenu -i -p}"
 
-# helper: display a rofi yes/no menu, returns 0 for yes
 rofi_yn() {
   local prompt="${1:-Proceed?}"
   local ans
@@ -18,7 +15,6 @@ rofi_yn() {
   [[ "$ans" == "Yes" ]]
 }
 
-# Ask-install: prompts via rofi, installs in a new terminal via yay or pacman
 ask_install() {
   local pkg="$1"
   local bin="${2:-$1}"
@@ -27,320 +23,126 @@ ask_install() {
   fi
 
   if ! rofi_yn "$pkg not found. Install?"; then
-    $ROFI_CMD "Skipping" <<< "Skipping installation of $pkg." >/dev/null 2>&1 || true
     return 1
   fi
 
-  # prefer yay if present
   if command -v yay &>/dev/null; then
-    $TERMINAL -e bash -c "yay -S --noconfirm $pkg || (echo 'install failed'; read -p 'Press enter...')"
+    $TERMINAL -e bash -c "yay -S --noconfirm $pkg || read -p 'Install failed, press enter...'"
   else
-    $TERMINAL -e bash -c "sudo pacman -S --noconfirm $pkg || (echo 'install failed'; read -p 'Press enter...')"
+    $TERMINAL -e bash -c "sudo pacman -S --noconfirm $pkg || read -p 'Install failed, press enter...'"
   fi
-
-  # final check
-  command -v "$bin" &>/dev/null
 }
 
-# Convenience function: open path in Thunar, auto-install Thunar if missing
 open_in_thunar() {
   local path="${1:-$HOME}"
   if ! command -v thunar &>/dev/null; then
-    if ask_install "thunar"; then
-      sleep 0.5
-    else
-      # fallback to xdg-open if thunar refused
-      xdg-open "$path" >/dev/null 2>&1 || $TERMINAL -e "$EDITOR" "$path"
-      return
-    fi
+    ask_install thunar || xdg-open "$path" >/dev/null 2>&1 || $TERMINAL -e "$EDITOR" "$path"
+  else
+    thunar "$path" &
   fi
-  thunar "$path" &
 }
 
-# Helper: open a file in pluma (GUI) if available, else in $TERMINAL with $EDITOR and pause
 open_file_gui_or_terminal() {
   local file="$1"
   if command -v pluma &>/dev/null; then
     pluma "$file" &
   else
-    $TERMINAL -e bash -c "$EDITOR \"$file\"; echo; read -p 'Press enter to exit...'"
+    $TERMINAL -e bash -c "$EDITOR '$file'; read -p 'Press enter to exit...'"
   fi
 }
 
-# ===== Settings Menu =====
 settings_menu() {
   local options=(
-"🌀  Hyprland"
-"🧭  Waybar"
-"🎛️  Rofi"
-"🖼️  Wallpaper"
-"⌨️  Keybinds"
-"🎨  Color Picker"
-"🔊  Audio Settings"
-"🗂️  All Settings"
-"⬅️  Back"
+    "🌀  Hyprland"
+    "🧭  Waybar"
+    "🎛️  Rofi"
+    "🖼️  Wallpaper"
+    "⌨️  Keybinds"
+    "🎨  Color Picker"
+    "🔊  Audio Settings"
+    "🗂️  All Settings"
+    "⬅️  Back"
   )
-  local choice
-  choice=$(printf '%s\n' "${options[@]}" | rofi -dmenu -i -p "Settings")
+  local choice=$(printf '%s\n' "${options[@]}" | rofi -dmenu -i -p "Settings")
 
   case "$choice" in
-    "🌀  Hyprland")
-      open_in_thunar "$HOME/.config/hypr"
-      ;;
-"🧭  Waybar")
-  # open the folder (will auto-install thunar if needed)
-  open_in_thunar "$HOME/.config/waybar"
-  ;;
-
-    "🎛️  Rofi")
-      open_in_thunar "$HOME/.config/rofi"
-      ;;
-    "🖼️  Wallpaper")
-      if command -v waypaper &>/dev/null; then
-        waypaper --open &
-      else
-        ask_install "waypaper" || rofi -e "No wallpaper tool found"
-      fi
-      ;;
-    "⌨️  Keybinds")
-      if [[ -f ~/.config/hypr/binds.conf ]]; then
-        open_file_gui_or_terminal "$HOME/.config/hypr/binds.conf"
-      else
-        rofi -e "binds.conf not found 😭"
-      fi
-      ;;
-    "🎨  Color Picker")
-      ask_install "hyprpicker" || return
-      if color=$(hyprpicker -a 2>/dev/null); then
-        if [[ -n "${color-}" ]]; then
-          command -v wl-copy &>/dev/null && wl-copy "$color" || printf "%s" "$color" | xclip -selection clipboard
-          notify-send "Color" "Copied: $color"
-        else
-          rofi -e "No color picked 💀"
-        fi
-      else
-        rofi -e "hyprpicker failed"
-      fi
-      ;;
-    "🔊  Audio Settings")
-      # prefer pavucontrol (PulseAPI/pipewire through pipewire-pulse) or helvum
-      if command -v pactl &>/dev/null || command -v pacmd &>/dev/null; then
-        ask_install "pavucontrol" || return
-        pavucontrol &
-      elif command -v pw-cli &>/dev/null; then
-        if command -v helvum &>/dev/null; then
-          helvum &
-        else
-          ask_install "helvum" || return
-          helvum &
-        fi
-      else
-        rofi -e "No audio subsystem detected 💀"
-      fi
-      ;;
-    "🗂️  All Settings")
-      open_in_thunar "$HOME/.config"
-      ;;
-    "⬅️  Back")
-      main_menu
-      ;;
+    "🌀  Hyprland") open_in_thunar "$HOME/.config/hypr" ;;
+    "🧭  Waybar") open_in_thunar "$HOME/.config/waybar" ;;
+    "🎛️  Rofi") open_in_thunar "$HOME/.config/rofi" ;;
+    "🖼️  Wallpaper") if command -v waypaper &>/dev/null; then waypaper --open & else ask_install waypaper || rofi -e "No wallpaper tool found"; fi ;;
+    "⌨️  Keybinds") [[ -f ~/.config/hypr/binds.conf ]] && open_file_gui_or_terminal "$HOME/.config/hypr/binds.conf" || rofi -e "binds.conf not found 💀" ;;
+    "🎨  Color Picker") ask_install hyprpicker || return; color=$(hyprpicker -a 2>/dev/null || true); [[ -n "$color" ]] && wl-copy "$color" && notify-send "Color" "Copied: $color" || rofi -e "No color picked 💀" ;;
+    "🔊  Audio Settings") ask_install pavucontrol && pavucontrol & ;;
+    "🗂️  All Settings") open_in_thunar "$HOME/.config" ;;
+    "⬅️  Back") main_menu ;;
   esac
 }
 
-# ===== Install Menu =====
 install_menu() {
   local options=(
-"🏗️  AUR (yay)"
-"📦  Pacman"
-"📦  Flatpak"
-"🔄  Update All"
-"⬅️  Back"
+    "🏗️  AUR (yay)"
+    "📦  Pacman"
+    "📦  Flatpak"
+    "🔄  Update All"
+    "⬅️  Back"
   )
-  local choice
-  choice=$(printf '%s\n' "${options[@]}" | rofi -dmenu -i -p "Install")
+  local choice=$(printf '%s\n' "${options[@]}" | rofi -dmenu -i -p "Install")
 
   case "$choice" in
-"🏗️  AUR (yay)")
-  pkg=$(rofi -dmenu -p "AUR package:")
-  [[ -n "$pkg" ]] && $TERMINAL -e bash -c "yay -S $pkg; read -p 'Press enter to exit...'"
-  ;;
-
-
-    "📦  Pacman")
-      mode=$(printf "🔍 Search\n📦 Direct Install" | rofi -dmenu -p "Pacman Mode")
-      if [[ "$mode" == "🔍 Search" ]]; then
-        query=$(rofi -dmenu -p "Search Pacman:")
-        [[ -z "$query" ]] && return
-        results=$(pacman -Ss "$query" | awk '{print $1}' | sed 's/.*\///' | head -n 50)
-        pkg=$(printf '%s\n' "$results" | rofi -dmenu -p "Select package:")
-        [[ -z "$pkg" ]] && return
-      else
-        pkg=$(rofi -dmenu -p "Pacman package:")
-      fi
-      [[ -n "$pkg" ]] && $TERMINAL -e bash -c "sudo pacman -S $pkg; read -p 'Press enter to exit...'"
-      ;;
-
-    "📦  Flatpak")
-      mode=$(printf "🔍 Search\n📦 Direct Install" | rofi -dmenu -p "Flatpak Mode")
-      if [[ "$mode" == "🔍 Search" ]]; then
-        query=$(rofi -dmenu -p "Search Flatpak:")
-        [[ -z "$query" ]] && return
-        results=$(flatpak search "$query" | awk 'NR>1 {print $1}' | head -n 50)
-        pkg=$(printf '%s\n' "$results" | rofi -dmenu -p "Select Flatpak package:")
-        [[ -z "$pkg" ]] && return
-      else
-        pkg=$(rofi -dmenu -p "Flatpak package (ID):")
-      fi
-      [[ -n "$pkg" ]] && $TERMINAL -e bash -c "flatpak install -y $pkg; read -p 'Press enter to exit...'"
-      ;;
-
-    "🔄  Update All")
-      $TERMINAL -e bash -c '
-echo "Updating system..."
-sudo pacman -Syu --noconfirm || true
-flatpak update -y || true
-if command -v yay &>/dev/null; then yay -Syu --noconfirm || true; fi
-echo "✅ All updates done!"
-read -p "Press enter to exit..."
-'
-      ;;
+    "🏗️  AUR (yay)") pkg=$(rofi -dmenu -p "AUR package:"); [[ -n "$pkg" ]] && $TERMINAL -e "yay -S $pkg" ;;
+    "📦  Pacman") pkg=$(rofi -dmenu -p "Pacman package:"); [[ -n "$pkg" ]] && $TERMINAL -e "sudo pacman -S $pkg" ;;
+    "📦  Flatpak") pkg=$(rofi -dmenu -p "Flatpak ID:"); [[ -n "$pkg" ]] && $TERMINAL -e "flatpak install -y $pkg" ;;
+    "🔄  Update All") $TERMINAL -e bash -c 'sudo pacman -Syu --noconfirm; flatpak update -y; yay -Syu --noconfirm; read -p "✅ Done! Press enter..."' ;;
     "⬅️  Back") main_menu ;;
   esac
 }
 
-# ===== Clipboard Menu =====
 clipboard_menu() {
-  local options=(
-"📋  Open Clipboard History"
-"🧹  Clear Clipboard History"
-"⬅️  Back"
-  )
-  local choice
-  choice=$(printf '%s\n' "${options[@]}" | rofi -dmenu -i -p "Clipboard")
-
+  local options=("📋  Open Clipboard" "🧹  Clear Clipboard" "⬅️  Back")
+  local choice=$(printf '%s\n' "${options[@]}" | rofi -dmenu -i -p "Clipboard")
   case "$choice" in
-    "📋  Open Clipboard History")
-      if [[ -x ~/.local/bin/rofi-cliphist ]]; then
-        bash ~/.local/bin/rofi-cliphist
-      else
-        ask_install "cliphist" || rofi -e "No cliphist found"
-      fi
-      ;;
-    "🧹  Clear Clipboard History")
-      if command -v cliphist &>/dev/null; then
-        cliphist wipe && notify-send "Clipboard" "Cleared"
-      else
-        rofi -e "No cliphist available"
-      fi
-      ;;
+    "📋  Open Clipboard") [[ -x ~/.local/bin/rofi-cliphist ]] && bash ~/.local/bin/rofi-cliphist || ask_install cliphist ;;
+    "🧹  Clear Clipboard") command -v cliphist &>/dev/null && cliphist wipe && notify-send "Clipboard" "Cleared" || rofi -e "No cliphist" ;;
     "⬅️  Back") main_menu ;;
   esac
 }
 
-# ===== Screenshot / Record =====
-screenshot_menu() {
-  local options=(
-"🖥️  Screenshot Screen"
-"🟩  Screenshot Area"
-"🎥  Screen Record (OBS)"
-"⬅️  Back"
-  )
-  local choice
-  choice=$(printf '%s\n' "${options[@]}" | rofi -dmenu -i -p "Screenshot / Record")
-
-  case "$choice" in
-    "🖥️  Screenshot Screen")
-      ask_install "grimblast" || return
-      grimblast copysave screen --notify
-      notify-send "Screenshot" "Full screen saved & copied"
-      ;;
-    "🟩  Screenshot Area")
-      ask_install "grimblast" || return
-      grimblast copysave area --notify
-      notify-send "Screenshot" "Area saved & copied"
-      ;;
-    "🎥  Screen Record (OBS)")
-      if ! command -v obs &>/dev/null; then
-        if rofi_yn "OBS not found. Install?"; then
-          if command -v yay &>/dev/null; then
-            $TERMINAL -e bash -c "yay -S obs-studio; read -p 'Press enter...'"
-          else
-            $TERMINAL -e bash -c "sudo pacman -S obs-studio --noconfirm; read -p 'Press enter...'"
-          fi
-        else
-          rofi -e "Skipping OBS installation."
-          return
-        fi
-      fi
-      obs & disown
-      ;;
-    "⬅️  Back") main_menu ;;
-  esac
-}
-
-# ===== System Info =====
 sysinfo_menu() {
-  local options=(
-"🧠  Brokefetch"
-"⚡  Fastfetch"
-"📊  Btop"
-"⬅️  Back"
-  )
-  local choice
-  choice=$(printf '%s\n' "${options[@]}" | rofi -dmenu -i -p "System Info")
-
+  local options=("🧠  Brokefetch" "⚡  Fastfetch" "📊  Btop" "⬅️  Back")
+  local choice=$(printf '%s\n' "${options[@]}" | rofi -dmenu -i -p "System Info")
   case "$choice" in
-    "🧠  Brokefetch")
-      if command -v brokefetch &>/dev/null; then
-        $TERMINAL -e bash -c "brokefetch; echo; read -p 'Press enter to exit...'"
-      else
-        ans=$(printf 'Install\nOpen GitHub' | rofi -dmenu -p "Brokefetch not found")
-        [[ "$ans" == "Install" ]] && ask_install "brokefetch"
-        [[ "$ans" == "Open GitHub" ]] && xdg-open "https://github.com/Szerwigi1410/brokefetch" &
-      fi
-      ;;
-    "⚡  Fastfetch")
-      ask_install "fastfetch" || return
-      $TERMINAL -e bash -c "fastfetch; echo; read -p 'Press enter to exit...'"
-      ;;
-    "📊  Btop")
-      ask_install "btop" || return
-      $TERMINAL -e bash -c "btop; echo; read -p 'Press enter to exit...'"
-      ;;
+    "🧠  Brokefetch") command -v brokefetch &>/dev/null && $TERMINAL -e brokefetch || ask_install brokefetch ;;
+    "⚡  Fastfetch") ask_install fastfetch && $TERMINAL -e fastfetch ;;
+    "📊  Btop") ask_install btop && $TERMINAL -e btop ;;
     "⬅️  Back") main_menu ;;
   esac
 }
 
-# ===== Main Menu =====
 main_menu() {
   local options=(
-"⚙️  Settings"
-"🚀  Run Command"
-"📦  Install"
-"📋  Clipboard"
-"😀  Emoji Picker"
-"📸  Screenshot / Record"
-"🧠  System Info"
-"🔋  Power"
-"ℹ️  About"
+    "⚙️  Settings"
+    "🚀  Run Command"
+    "📦  Install"
+    "📋  Clipboard"
+    "😀  Emoji Picker"
+    "📸  Screen Recording"
+    "🧠  System Info"
+    "🔋  Power"
+    "ℹ️  About"
   )
-  local choice
-  choice=$(printf '%s\n' "${options[@]}" | rofi -dmenu -i -p "Aser Control Center")
-
+  local choice=$(printf '%s\n' "${options[@]}" | rofi -dmenu -i -p "Aser Control Center")
   case "$choice" in
     "⚙️  Settings") settings_menu ;;
     "🚀  Run Command") rofi -show run ;;
     "📦  Install") install_menu ;;
     "📋  Clipboard") clipboard_menu ;;
     "😀  Emoji Picker") rofi -show emoji ;;
-    "📸  Screenshot / Record") screenshot_menu ;;
+    "📸  Screen Recording") ~/.local/bin/screenrec & ;;
     "🧠  System Info") sysinfo_menu ;;
-    "🔋  Power") if command -v wlogout &>/dev/null; then wlogout; else rofi -e "wlogout not installed"; fi ;;
+    "🔋  Power") command -v wlogout &>/dev/null && wlogout || rofi -e "wlogout not installed" ;;
     "ℹ️  About") xdg-open "https://github.com/aserdevyt/aserdev-os/" ;;
     *) exit 0 ;;
   esac
 }
 
-# ===== Start =====
 main_menu
-
