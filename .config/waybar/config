@@ -105,7 +105,7 @@
   "custom/aser-settings": {
     "format": "⚙️",
     "tooltip": "Aser Control Center",
-    "on-click": "~/.local/bin/aser-settings",
+    "on-click": "aser-settings",
     "interval": 3600
   },
 
